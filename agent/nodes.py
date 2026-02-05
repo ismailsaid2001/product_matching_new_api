@@ -13,7 +13,7 @@ def database_node(state: AgentState):
     database_confidence = suggestions[0]['similarity_score'] if suggestions else 0.0
     database_prediction = suggestions[0]['nature_product'] if suggestions else None
     
-    # On vérifie le meilleur score
+    # Check the best score
     if suggestions and suggestions[0]['similarity_score'] >= THRESHOLD_DATABASE:
         similarity_score = suggestions[0]['similarity_score']
         return {
@@ -38,11 +38,11 @@ def t5_node(state: AgentState):
     t5_service = T5ModelService.get_instance()
     prediction, confidence = t5_service.predict(state["description"])
     
-    # On vérifie si T5 est assez sûr de lui
+    # Check if T5 is confident enough
     is_confident = confidence >= THRESHOLD_T5_CONF
     
-    # Si T5 est sûr, on peut déjà préparer le label final
-    # Sinon, on laisse le state tel quel pour que l'orchestrateur GPT intervienne
+    # If T5 is confident, prepare final label
+    # Otherwise, leave state as is for GPT orchestrator intervention
     update = {
         "t5_prediction": prediction,
         "t5_confidence": confidence,
@@ -59,12 +59,12 @@ def t5_node(state: AgentState):
 def orchestrator_node(state: AgentState):
     print("--- ÉTAPE 3 : ARBITRAGE GPT-5 & WEB SEARCH ---")
     
-    # Défaut de repli si orchestrateur indisponible (clé API manquante, etc.)
+    # Fallback if orchestrator unavailable (missing API key, etc.)
     try:
         service = OrchestratorService()
     except Exception as e:
         print(f"Orchestrator indisponible, repli local: {e}")
-        # Choix: si API a une bonne suggestion, sinon T5, sinon vide
+        # Choice: if API has good suggestion, else T5, else empty
         fallback_label = None
         if state.get("api_suggestions"):
             fallback_label = state["api_suggestions"][0].get("nature_product")
@@ -79,7 +79,7 @@ def orchestrator_node(state: AgentState):
 
     web_info = None
 
-    # GPT rend son verdict
+    # GPT renders its verdict
     cost_info = None
     try:
         final_decision, cost_info = service.arbitrate(
@@ -91,7 +91,7 @@ def orchestrator_node(state: AgentState):
         )
         
     except Exception as e:
-        print(f"Arbitrage echoue, repli local: {e}")
+        print(f"Arbitration failed, local fallback: {e}")
         final_decision = (state.get("api_suggestions") or [{}])[0].get("nature_product") or state.get("t5_prediction") or ""
 
     return {

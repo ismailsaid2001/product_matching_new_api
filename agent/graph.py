@@ -16,13 +16,13 @@ def create_app():
 
     # 3. Logique de routage après la DB
     def router_after_db(state):
-        if state.get("final_label"): # Si un match parfait a été trouvé
+        if state.get("final_label"): # If a perfect match was found
             return "end"
         return "t5"
 
     # 4. Logique de routage après T5
     def router_after_t5(state):
-        if state.get("final_label"): # Si T5 est confiant
+        if state.get("final_label"): # If T5 is confident
             return "end"
         return "gpt"
 
@@ -43,5 +43,5 @@ def create_app():
 
     return workflow.compile()
 
-# Compilation de l'application LangGraph
+# LangGraph application compilation
 app_langgraph = create_app()

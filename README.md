@@ -7,11 +7,11 @@
 
 ## Overview
 
-Système de classification automatique de produits utilisant une architecture agentic multi-étapes avec LangGraph. Le système optimise les coûts et la précision en routant intelligemment les requêtes à travers trois niveaux :
+Automatic product classification system using a multi-stage agent architecture with LangGraph. The system optimizes costs and accuracy by intelligently routing requests through three levels:
 
-1. **Base de données** - Recherche de similarité rapide
-2. **Modèle T5 local** - Classification par IA locale 
-3. **LLM (GPT)** - Arbitrage final avec recherche web
+1. **Database** - Fast similarity search
+2. **Local T5 Model** - Local AI classification
+3. **LLM (GPT)** - Final arbitration with web search
 
 ## Architecture
 
@@ -29,61 +29,61 @@ graph TD
 
 ## Features
 
-- **Architecture Agentic** avec LangGraph pour orchestration intelligente
-- **Classification multi-langue** (français, anglais, italien, espagnol, allemand)
-- **Optimisation coût/précision** via seuils configurables
-- **Évaluation complète** avec métriques détaillées par étape
-- **API REST** avec FastAPI
-- **Containerisation** Docker complète
-- **Monitoring des coûts** en temps réel
+- **Agent Architecture** with LangGraph for intelligent orchestration
+- **Multi-language classification** (French, English, Italian, Spanish, German)
+- **Cost/accuracy optimization** via configurable thresholds
+- **Complete evaluation** with detailed metrics per stage
+- **REST API** with FastAPI
+- **Complete containerization** with Docker
+- **Real-time cost monitoring**
 
 ## Quick Start
 
 ### Prerequisites
 ```bash
 - Docker & Docker Compose
-- Python 3.11+ (pour développement local)
-- Clés API : OpenAI, Tavily, Hugging Face
+- Python 3.11+ (for local development)
+- API Keys: OpenAI, Tavily, Hugging Face
 ```
 
 ### Setup
-1. **Cloner le repository**
+1. **Clone the repository**
 ```bash
 git clone <your-repo-url>
 cd produc_match_new_api
 ```
 
-2. **Configurer les variables d'environnement**
+2. **Configure environment variables**
 ```bash
 cp .env.example .env
-# Éditer .env avec vos clés API
+# Edit .env with your API keys
 ```
 
-3. **Lancer avec Docker**
+3. **Launch with Docker**
 ```bash
 docker compose up --build
 ```
 
-L'API sera disponible sur `http://localhost:8000`
+The API will be available at `http://localhost:8000`
 
 ## Configuration
 
-### Variables d'environnement (.env)
+### Environment variables (.env)
 ```env
 OPENAI_API_KEY=your_openai_key_here
 TAVILY_API_KEY=your_tavily_key_here
 HUGGINGFACE_TOKEN=your_hf_token_here
 ```
 
-### Seuils de confiance (config.py)
+### Confidence thresholds (config.py)
 ```python
-THRESHOLD_DATABASE = 0.8  # Seuil pour arrêt à la DB
-THRESHOLD_T5_CONF = 0.7   # Seuil pour arrêt au T5
+THRESHOLD_DATABASE = 0.8  # Threshold for DB stop
+THRESHOLD_T5_CONF = 0.7   # Threshold for T5 stop
 ```
 
 ## API Usage
 
-### Classification simple
+### Simple classification
 ```bash
 curl -X POST "http://localhost:8000/classify" \
   -H "Content-Type: application/json" \
@@ -105,7 +105,7 @@ curl -X POST "http://localhost:8000/classify" \
 }
 ```
 
-### Classification batch
+### Batch classification
 ```bash
 curl -X POST "http://localhost:8000/classify/batch" \
   -H "Content-Type: application/json" \
@@ -114,25 +114,25 @@ curl -X POST "http://localhost:8000/classify/batch" \
 
 ## Evaluation and Testing
 
-### Tests complets
+### Complete tests
 ```bash
-# Test français (150 produits)
+# French test (150 products)
 python evaluation_test_french.py
 
-# Test multilingue (150 produits)
+# Multilingual test (150 products)
 python evaluation_test_multilingual.py
 ```
 
-### Métriques collectées
-- Précision par étape (DB, T5, LLM)
-- Temps de traitement
-- Coûts par requête
-- Distribution des décisions
-- Performance par catégorie/langue
+### Collected metrics
+- Accuracy per stage (DB, T5, LLM)
+- Processing time
+- Cost per request
+- Decision distribution
+- Performance by category/language
 
 ## Performance Analysis
 
-Le système génère des CSVs détaillés avec :
+The system generates detailed CSVs with:
 ```csv
 product_id,predicted_label,expected_label,is_correct,confidence,
 database_confidence,database_prediction,
@@ -140,20 +140,20 @@ t5_confidence,t5_prediction,
 decision_node,processing_time_ms,cost_usd
 ```
 
-## Logging et Debug
+## Logging and Debug
 
-### Configuration du logging des prompts LLM
+### LLM prompt logging configuration
 
-Le système offre un logging détaillé des prompts envoyés au LLM pour faciliter le debug et l'optimisation :
+The system offers detailed logging of prompts sent to the LLM to facilitate debugging and optimization:
 
 ```bash
-# Dans votre .env
-ENABLE_LLM_PROMPT_LOGGING=true         # Active/désactive le logging des prompts
-MAX_PROMPT_LOG_LENGTH=2000            # Longueur max des prompts loggés (tronqués au-delà)
-LLM_PROMPT_LOG_LEVEL=INFO             # Niveau de log (INFO, DEBUG, WARNING)
+# In your .env
+ENABLE_LLM_PROMPT_LOGGING=true         # Enable/disable prompt logging
+MAX_PROMPT_LOG_LENGTH=2000            # Max length of logged prompts (truncated beyond)
+LLM_PROMPT_LOG_LEVEL=INFO             # Log level (INFO, DEBUG, WARNING)
 ```
 
-### Exemple de logs générés
+### Example generated logs
 
 ```
 ================================================================================
@@ -182,22 +182,22 @@ RÉPONSE FINALE LLM: emmental rape
 COÛT: $0.000123 (Input: 245, Output: 12)
 ```
 
-### Contrôle du niveau de logging
+### Logging level control
 
 ```python
-# Dans le code, vous pouvez contrôler le logging par instance
+# In code, you can control logging per instance
 from services.llm_service import OrchestratorService
 
-# Désactiver le logging pour cette instance
+# Disable logging for this instance
 orchestrator = OrchestratorService(enable_prompt_logging=False)
 
-# Ou utiliser la configuration par défaut du .env
+# Or use default .env configuration
 orchestrator = OrchestratorService()
 ```
 
-### Logs de performance
+### Performance logs
 
-Chaque appel génère également des logs de coût détaillés :
+Each call also generates detailed cost logs:
 ```
 Coût GPT-5-nano: $0.000123
    • Input: 245 tokens ($0.000012)
@@ -209,61 +209,96 @@ Coût GPT-5-nano: $0.000123
 
 ```
 produc_match_new_api/
-├── agent/                      # Architecture LangGraph
-│   ├── graph.py               # Workflow orchestration
-│   ├── nodes.py               # Nœuds de traitement
-│   └── state.py               # État partagé
-├── services/                   # Services métier
-│   ├── database_service.py    # Recherche DB
-│   ├── t5_service.py          # Modèle local
-│   └── llm_service.py         # Service LLM
-├── evaluation_test_*.py       # Scripts d'évaluation
-├── main.py                    # API FastAPI
-├── config.py                  # Configuration
-├── docker-compose.yml         # Container orchestration
-└── requirements.txt           # Dépendances Python
+├── .env                        # Environment variables
+├── .env.example               # Example environment file
+├── .gitignore                 # Git ignore rules
+├── .dockerignore              # Docker ignore rules
+├── README.md                  # Project documentation
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Docker container definition
+├── docker-compose.yml         # Docker orchestration
+├── config.py                  # Configuration settings
+├── main.py                    # FastAPI application entry point
+├── performance_monitor.py     # Performance monitoring utilities
+├── results.py                 # Results processing utilities
+├── inferencet5.ipynb         # T5 model inference notebook
+├── labeled_products_filtered.csv  # Filtered product dataset
+├── classification_dashboard.html  # Web dashboard for results
+│
+├── agent/                     # LangGraph Architecture
+│   ├── graph.py              # Workflow orchestration
+│   ├── nodes.py              # Processing nodes
+│   └── state.py              # Shared state definition
+│
+├── services/                  # Business services
+│   ├── database_service.py   # External API integration
+│   ├── t5_service.py         # Local T5 model service
+│   └── llm_service.py        # Groq LLM service
+│
+├── evaluation/                # Evaluation scripts
+│   ├── evaluation_test_french.py      # French language tests
+│   ├── evaluation_test_multilingual.py # Multi-language tests
+│   └── evaluation_test_real_data.py   # Real data evaluation
+│
+├── data/                      # Dataset files
+│   ├── labeled_products.csv  # Original labeled dataset
+│   ├── nature_product.csv    # Product nature mapping
+│   └── validation_set.csv    # Validation dataset
+│
+├── utils/                     # Utility functions
+│   └── filter_labeled_products.py  # Data preprocessing
+│
+├── checkpoint-11004/          # T5 model checkpoint
+│   ├── adapter_config.json   # LoRA adapter configuration
+│   ├── adapter_model.safetensors  # Model weights
+│   ├── tokenizer.json        # Tokenizer definition
+│   └── ...                   # Other model files
+│
+├── logs/                      # Application logs
+├── models/                    # Model artifacts
+├── __pycache__/              # Python cache files
 ```
 
 ## Supported Categories
 
 ### Product Types
-- **Alimentaire** : Fromages, charcuterie, poissons, viandes
-- **Boissons** : Bières, vins, spiritueux, champagnes  
-- **Entretien** : Produits de nettoyage, désinfectants
-- **Équipement** : Matériel de cuisine professionnel
+- **Food** : Cheeses, charcuterie, fish, meat
+- **Beverages** : Beers, wines, spirits, champagnes
+- **Cleaning** : Cleaning products, disinfectants
+- **Equipment** : Professional kitchen equipment
 
 ### Supported Languages
-- Français
-- Anglais  
-- Italien
-- Espagnol
-- Allemand
+- French
+- English
+- Italian
+- Spanish
+- German
 
 ## Threshold Optimization
 
-Utilisez les données d'évaluation pour optimiser :
+Use evaluation data to optimize:
 
 ```python
-# Analyse coût/précision
+# Cost/accuracy analysis
 import pandas as pd
 df = pd.read_csv('evaluation_results.csv')
 
-# Performance par seuil
+# Performance by threshold
 for threshold in [0.7, 0.8, 0.9]:
     db_stopped = df[df['database_confidence'] >= threshold]
     accuracy = (db_stopped['database_prediction'] == db_stopped['expected_label']).mean()
     cost_saved = df[df['database_confidence'] < threshold]['cost_usd'].sum()
-    print(f"Seuil {threshold}: Précision={accuracy:.3f}, Économie=${cost_saved:.4f}")
+    print(f"Threshold {threshold}: Accuracy={accuracy:.3f}, Savings=${cost_saved:.4f}")
 ```
 
 ## Deployment
 
-### Production avec Docker
+### Production with Docker
 ```bash
-# Build optimisé
+# Optimized build
 docker build -t product-classifier:prod .
 
-# Run avec ressources limitées  
+# Run with limited resources
 docker run -p 8000:8000 \
   --env-file .env \
   --memory=2g \
@@ -271,7 +306,7 @@ docker run -p 8000:8000 \
   product-classifier:prod
 ```
 
-### Scaling horizontal
+### Horizontal scaling
 ```yaml
 # docker-compose.prod.yml
 version: '3.8'
@@ -288,27 +323,27 @@ services:
 
 ## Contributing
 
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/amélioration`)
-3. Commit vos changements (`git commit -am 'Ajout fonctionnalité'`)
-4. Push la branche (`git push origin feature/amélioration`)
-5. Ouvrir une Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/improvement`)
+3. Commit your changes (`git commit -am 'Add feature'`)
+4. Push the branch (`git push origin feature/improvement`)
+5. Open a Pull Request
 
 ## License
 
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour les détails.
+This project is under MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Authors
 
-- **Votre Nom** - *Développement initial* - [@votre-github](https://github.com/votre-github)
+- **Your Name** - *Initial development* - [@your-github](https://github.com/your-github)
 
 ## Support
 
-Pour toute question ou problème :
-- **Issues** : [GitHub Issues](https://github.com/votre-repo/issues)
-- **Email** : votre-email@exemple.com
-- **Discord** : [Lien du serveur](https://discord.gg/votre-serveur)
+For any questions or issues:
+- **Issues** : [GitHub Issues](https://github.com/your-repo/issues)
+- **Email** : your-email@example.com
+- **Discord** : [Server link](https://discord.gg/your-server)
 
 ---
 
-**N'hésitez pas à mettre une étoile si ce projet vous est utile !**
+**Feel free to star if this project is useful to you!**

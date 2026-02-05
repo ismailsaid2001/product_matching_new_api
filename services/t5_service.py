@@ -12,7 +12,7 @@ class T5ModelService:
     _initialized = False
 
     def __init__(self):
-        # Éviter la réinitialisation multiple
+        # Avoid multiple reinitializations
         if hasattr(self, '_initialized') and self._initialized:
             return
             
@@ -93,7 +93,7 @@ class T5ModelService:
         return cls._instance
 
     def predict(self, description: str):
-        # Thread-safe prediction avec lock pour éviter les conflits concurrents
+        # Thread-safe prediction with lock to avoid concurrent conflicts
         with threading.Lock():
             input_text = f"{self.prefix}{description}"
             inputs = self.tokenizer(input_text, return_tensors="pt").to(self.device)

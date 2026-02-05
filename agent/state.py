@@ -1,7 +1,7 @@
 from typing import TypedDict, List, Optional
 
 class AgentState(TypedDict):
-    description: str               # description originale
+    description: str               # original description
     api_suggestions: List[dict]    
     t5_prediction: Optional[str]
     t5_confidence: Optional[float]

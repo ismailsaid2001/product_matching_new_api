@@ -12,7 +12,7 @@ import datetime
 
 class OrchestratorService:
     def __init__(self, enable_prompt_logging=None):
-        # Configuration du logging des prompts
+        # Prompt logging configuration
         self.enable_prompt_logging = enable_prompt_logging if enable_prompt_logging is not None else getattr(_cfg, "ENABLE_LLM_PROMPT_LOGGING", True)
         self.max_prompt_length = getattr(_cfg, "MAX_PROMPT_LOG_LENGTH", 10000)
         self.log_level = getattr(_cfg, "LLM_PROMPT_LOG_LEVEL", "INFO")
@@ -25,27 +25,27 @@ class OrchestratorService:
             self.logger.addHandler(handler)
             self.logger.setLevel(getattr(logging, self.log_level, logging.INFO))
         
-        # Récupération des clés API
+        # API keys retrieval
         groq_key = getattr(_cfg, "GROQ_API_KEY", None)
         tavily_key = getattr(_cfg, "TAVILY_API_KEY", None)
         if not groq_key:
             raise RuntimeError("GROQ_API_KEY manquante dans config")
 
-        # Configuration du LLM avec Groq
+        # LLM configuration with Groq
         self.llm = ChatGroq(
             model="openai/gpt-oss-120b",
             temperature=0,
             api_key=groq_key
         )
         
-        # Configuration de la recherche Web
+        # Web search configuration
         self.search_tool = TavilySearchResults(api_key=tavily_key) if tavily_key else None
         
-        # Liste des outils disponibles
+        # Available tools list
         self.tools = []
 
     def search_web(self, query: str):
-        """Lance une recherche web pour identifier un produit inconnu."""
+        """Launch web search to identify an unknown product."""
         if not self.search_tool:
             raise RuntimeError("TAVILY_API_KEY manquante pour la recherche web")
         results = self.search_tool.invoke({"query": query})
@@ -66,7 +66,7 @@ class OrchestratorService:
         
         return {
             "input_tokens": input_tokens,
-            "cached_tokens": 0,  # Groq ne supporte pas le cache
+            "cached_tokens": 0,  # Groq does not support cache
             "output_tokens": output_tokens,
             "input_cost_usd": round(input_cost, 6),
             "cached_cost_usd": 0.0,
@@ -75,7 +75,7 @@ class OrchestratorService:
         }
 
     def log_prompt(self, messages, call_type="INITIAL", context=""):
-        """Log les prompts envoyés au LLM avec formatage détaillé."""
+        """Log prompts sent to LLM with detailed formatting."""
         if not self.enable_prompt_logging:
             return
             
@@ -107,12 +107,12 @@ class OrchestratorService:
         self.logger.info(f"\n{'='*80}\n")
 
     def save_prompt_to_file(self, messages, description, filename_prefix="prompt"):
-        """Sauvegarde un prompt complet dans un fichier pour analyse approfondie."""
+        """Save complete prompt to file for detailed analysis."""
         if not self.enable_prompt_logging:
             return None
             
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Nettoyer la description pour le nom de fichier
+        # Clean description for filename
         safe_desc = "".join(c for c in description[:50] if c.isalnum() or c in (' ', '-', '_')).strip().replace(' ', '_')
         filename = f"{filename_prefix}_{safe_desc}_{timestamp}.txt"
         
@@ -138,38 +138,39 @@ class OrchestratorService:
             return filename
             
         except Exception as e:
-            self.logger.error(f"Erreur lors de la sauvegarde du prompt: {e}")
+            self.logger.error(f"Error saving prompt: {e}")
             return None
 
     def arbitrate(self, description, t5_suggestion, t5_confidence, api_suggestions, web_context=None):
-        """Logique agentique OPTIMISÉE - seulement API suggestions ou création."""
+        """Optimized agent logic - only API suggestions or creation."""
         
-        system_prompt = """Tu es un expert en Normalisation de Données Logistiques (Master Data Management). Ta mission est de convertir une description de facture brute en un "nature_product" : un nom canonique, générique, précis et TOUJOURS EN FRANÇAIS
+        system_prompt = """You are an expert in Logistics Data Normalization (Master Data Management). Your mission is to convert a raw invoice description into a "nature_product": a canonical, generic, precise name ALWAYS IN FRENCH
 
-LOGIQUE:
-1. Si les scores des  suggestions API ≥ 0.82 et correspond vraiment à la description → utilise la suggestion EXACTE
-2. Sinon → crée un nouveau nature produit
+LOGIC:
+1. If API suggestions score ≥ 0.82 and really corresponds to the description → use the EXACT suggestion
+2. Otherwise → create a new nature product
 
+CREATION RULES:
+- French, no articles (le/la)
+- Remove standard volumes (33cl, 75cl) except special formats
+- Keep important info: product type + key characteristics
 
-RÈGLES CRÉATION:
-- Français, pas d'articles (le/la)
-- Supprimer volumes standards (33cl, 75cl) sauf formats spéciaux
-- Garder info importante: type produit + caractéristiques clés
-
-CRÉATION - EXEMPLES:
+CREATION - EXAMPLES:
 descriptions → nature_product
 - "cote detallonee angus boeuf angus" → "Boeuf angus côte détallonnée"
 - "kolors mousse" → "Mousse nettoyante"
 - "HEINEKEN BOUTEILLE 33CL" → "Bière blonde"
 - "HUILE OLIVE BIDON 5L" → "Huile olive 5L"
 - "jambon fume demi par piece de 3.7 kg" → "Jambon cru demi"
-En bref :
-1.verifie les suggestions API, si une suggestion a un score de similarité élevé (≥ 0.82) et correspond bien à la description, utilise cette suggestion EXACTE.
-2.Applique la règle du volume standard selon la catégorie identifiée.
-2.Produis le nom canonique français le plus court et pertinent sur la description brute.
-RÉPONDS UNIQUEMENT AVEC LE LIBELLÉ FINAL."""
 
-        # Formater seulement les meilleures suggestions (top 3 max)
+In summary:
+1. Check API suggestions, if a suggestion has a high similarity score (≥ 0.82) and corresponds well to the description, use this EXACT suggestion.
+2. Apply the standard volume rule according to the identified category.
+3. Produce the shortest and most relevant French canonical name from the raw description.
+
+RESPOND ONLY WITH THE FINAL LABEL."""
+
+        # Format only the best suggestions (top 3 max)
         top_suggestions = api_suggestions[:3] if api_suggestions else []
         suggestions_text = ""
         if top_suggestions:
@@ -182,13 +183,13 @@ RÉPONDS UNIQUEMENT AVEC LE LIBELLÉ FINAL."""
             HumanMessage(content=user_content)
         ]
 
-        # Appel LLM avec Groq
+        # LLM call with Groq
         response = self.llm.invoke(messages)
         
-        # Extraction des métadonnées d'usage pour Groq
+        # Extract usage metadata for Groq
         usage = response.response_metadata.get("token_usage", {})
         
-        # Calcul des coûts pour Groq
+        # Calculate costs for Groq
         cost = self.calculate_cost(
             usage.get("prompt_tokens", 0), 
             usage.get("completion_tokens", 0),

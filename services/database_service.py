@@ -4,8 +4,8 @@ from config import API_URL
 
 def _normalize_suggestions(payload):
     """
-    Normalise la réponse de l'API find_suggestions.
-    La réponse a la structure:
+    Normalize the find_suggestions API response.
+    The response has the structure:
     {
       "nature_product_suggestions": [
         {
@@ -17,16 +17,16 @@ def _normalize_suggestions(payload):
       ]
     }
     """
-    # Extraire la liste des suggestions
+    # Extract the suggestions list
     if isinstance(payload, dict):
         suggestions = payload.get("nature_product_suggestions", [])
     elif isinstance(payload, list):
-        # Fallback si la réponse est directement une liste
+        # Fallback if response is directly a list
         suggestions = payload
     else:
         suggestions = []
 
-    # Filtrer et trier par similarity_score décroissant
+    # Filter and sort by descending similarity_score
     valid_suggestions = [s for s in suggestions if isinstance(s, dict) and s.get("similarity_score", 0) > 0]
     valid_suggestions.sort(key=lambda x: x.get("similarity_score", 0.0), reverse=True)
     
@@ -35,7 +35,7 @@ def _normalize_suggestions(payload):
 
 def get_database_suggestions(designation: str):
     """
-    Appelle l'endpoint find_suggestions avec la structure simplifiée.
+    Call the find_suggestions endpoint with simplified structure.
     """
     try:
         payload = {
@@ -50,5 +50,5 @@ def get_database_suggestions(designation: str):
         response.raise_for_status()
         return _normalize_suggestions(response.json())
     except Exception as e:
-        print(f"Erreur API (find_suggestions): {e}")
+        print(f"API Error (find_suggestions): {e}")
         return []

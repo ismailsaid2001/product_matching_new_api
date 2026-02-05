@@ -116,13 +116,13 @@ async def classify_products_batch(request: BatchClassificationRequest):
 
 @app.on_event("startup")
 async def load_models():
-    """Preload models au démarrage pour éviter les rechargements concurrents"""
-    print("Préchargement des modèles au démarrage...")
+    """Preload models at startup to avoid concurrent reloads"""
+    print("Preloading models at startup...")
     from services.t5_service import T5ModelService
     
-    # Précharger T5 Service en singleton
+    # Preload T5 Service as singleton
     t5_service = T5ModelService.get_instance()
-    print("Modèles préchargés et prêts !")
+    print("Models preloaded and ready!")
 
 @app.get("/health")
 async def health_check():
