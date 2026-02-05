@@ -17,14 +17,28 @@ Automatic product classification system using a multi-stage agent architecture w
 
 ```mermaid
 graph TD
-    A[Product Description] --> B[Database Search]
-    B --> C{Confidence >= 0.8?}
-    C -->|Yes| D[Return DB Result]
+    A[Product Description] --> B[find_suggestions API Call]
+    B --> B1[Top 3 Product Suggestions<br/>with Similarity Scores]
+    B1 --> C{Best Score >= THRESHOLD_DATABASE?}
+    C -->|Yes| D[Return Best DB Result<br/>Fast Path - No Cost]
     C -->|No| E[T5 Model Prediction]
-    E --> F{Confidence >= 0.7?}
-    F -->|Yes| G[Return T5 Result]
-    F -->|No| H[LLM Arbitration + Web Search]
-    H --> I[Final Decision]
+    E --> E1[T5 Generates Prediction<br/>+ Confidence Score]
+    E1 --> F{T5 Confidence >= THRESHOLD_T5_CONF?}
+    F -->|Yes| G[Return T5 Result<br/>Local Path - No Cost]
+    F -->|No| H[Groq LLM Arbitration]
+    
+    B1 --> H1[Store Top 3 API Suggestions]
+    E1 --> H2[Store T5 Prediction + Confidence]
+    H1 --> H
+    H2 --> H
+    
+    H --> H3[LLM Evaluates:<br/>• Top 3 API Suggestions<br/>• T5 Prediction<br/>• Creates New Product if needed]
+    H3 --> I[Final Decision<br/>+ Cost Tracking]
+    
+    style D fill:#90EE90
+    style G fill:#87CEEB  
+    style I fill:#FFB6C1
+    style H3 fill:#DDA0DD
 ```
 
 ## Features
@@ -77,8 +91,8 @@ HUGGINGFACE_TOKEN=your_hf_token_here
 
 ### Confidence thresholds (config.py)
 ```python
-THRESHOLD_DATABASE = 0.8  # Threshold for DB stop
-THRESHOLD_T5_CONF = 0.7   # Threshold for T5 stop
+THRESHOLD_DATABASE = 0.95  # Threshold for DB stop
+THRESHOLD_T5_CONF = 0.94   # Threshold for T5 stop
 ```
 
 ## API Usage
