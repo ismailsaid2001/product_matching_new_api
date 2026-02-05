@@ -6,6 +6,9 @@ config.py
 .env.staging
 *.env
 
+
+#images 
+*.png
 # CSV Data Files
 *.csv
 evaluation_*.csv
