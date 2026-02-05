@@ -23,7 +23,7 @@ graph TD
     C -->|Yes| D[Return DB Result<br/>Fast - No Cost]
     C -->|No| E[T5 Prediction]
     E --> E1[T5 Result<br/>+ Confidence]
-    E1 --> F{Confidence >= T5_THRESHOLD?}
+    E1 --> F{Conf >= T5_THRESH?}
     F -->|Yes| G[Return T5 Result<br/>Local - No Cost]
     F -->|No| H[Groq LLM]
     
@@ -32,7 +32,7 @@ graph TD
     H1 --> H
     H2 --> H
     
-    H --> H3[LLM Analysis:<br/>• API Options<br/>• T5 Result<br/>• Create New]
+    H --> H3[LLM Analysis:<br/>• API Options<br/>• T5 Result<br/>• Create New if needed]
     H3 --> I[Final Decision<br/>+ Cost Track]
     
     style D fill:#E8F5E8
