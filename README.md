@@ -35,10 +35,10 @@ graph TD
     H --> H3[LLM Evaluates:<br/>• Top 3 API Suggestions<br/>• T5 Prediction<br/>• Creates New Product if needed]
     H3 --> I[Final Decision<br/>+ Cost Tracking]
     
-    style D fill:#90EE90
-    style G fill:#87CEEB  
-    style I fill:#FFB6C1
-    style H3 fill:#DDA0DD
+    style D fill:#E8F5E8
+    style G fill:#E6F3FF  
+    style I fill:#FFF0F5
+    style H3 fill:#F5F0FF
 ```
 
 ## Features
