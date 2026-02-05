@@ -36,7 +36,7 @@ class PerformanceMonitor:
     
     async def stress_test(self, concurrent_requests: int = 20, duration_seconds: int = 60):
         """Stress test the API"""
-        print(f"🚀 Starting stress test: {concurrent_requests} concurrent requests for {duration_seconds}s")
+        print(f"Starting stress test: {concurrent_requests} concurrent requests for {duration_seconds}s")
         
         test_products = [
             "Fromage camembert Normandie 250g",
@@ -73,7 +73,7 @@ class PerformanceMonitor:
         actual_duration = time.time() - start_time
         rps = request_count / actual_duration
         
-        print(f"📊 Stress test results:")
+        print(f"Stress test results:")
         print(f"   Total requests: {request_count}")
         print(f"   Errors: {errors}")
         print(f"   Requests per second: {rps:.2f}")
@@ -85,7 +85,7 @@ async def main():
     # Test latency
     async with aiohttp.ClientSession() as session:
         stats = await monitor.measure_latency(session, "Fromage camembert 250g")
-        print(f"🔍 Latency stats (ms): {stats}")
+        print(f"Latency stats (ms): {stats}")
     
     # Stress test
     await monitor.stress_test(concurrent_requests=10, duration_seconds=30)

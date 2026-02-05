@@ -18,6 +18,10 @@ class ClassificationRequest(BaseModel):
 class ClassificationResponse(BaseModel):
     final_label: str
     confidence: float
+    database_confidence: Optional[float] = None
+    database_prediction: Optional[str] = None
+    t5_confidence: Optional[float] = None
+    t5_prediction: Optional[str] = None
     path_taken: list
     processing_time_ms: float
     cost_usd: Optional[float] = None
@@ -52,6 +56,10 @@ def process_single_product(designation: str, product_id: Optional[str] = None):
     return {
         "final_label": result["final_label"],
         "confidence": result.get("confidence", result.get("t5_confidence", 1.0)),
+        "database_confidence": result.get("database_confidence"),
+        "database_prediction": result.get("database_prediction"),
+        "t5_confidence": result.get("t5_confidence"),
+        "t5_prediction": result.get("t5_prediction"),
         "path_taken": result["step_history"],
         "processing_time_ms": processing_time,
         "cost_usd": cost_usd,
@@ -105,6 +113,16 @@ async def classify_products_batch(request: BatchClassificationRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.on_event("startup")
+async def load_models():
+    """Preload models au démarrage pour éviter les rechargements concurrents"""
+    print("Préchargement des modèles au démarrage...")
+    from services.t5_service import T5ModelService
+    
+    # Précharger T5 Service en singleton
+    t5_service = T5ModelService.get_instance()
+    print("Modèles préchargés et prêts !")
 
 @app.get("/health")
 async def health_check():

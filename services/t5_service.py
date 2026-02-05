@@ -1,5 +1,6 @@
 import torch
 import os
+import threading
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 from huggingface_hub import HfFolder
@@ -7,8 +8,15 @@ from config import MODEL_PATH, THRESHOLD_T5_CONF, BASE_MODEL_ID, HF_TOKEN
 
 class T5ModelService:
     _instance = None
+    _lock = threading.Lock()
+    _initialized = False
 
     def __init__(self):
+        # Éviter la réinitialisation multiple
+        if hasattr(self, '_initialized') and self._initialized:
+            return
+            
+        print(f"🚀 Initializing T5 Service (Thread: {threading.current_thread().name})")
         # Detect device (CPU only if GPU incompatible)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         dtype = (
@@ -71,26 +79,33 @@ class T5ModelService:
             raise
 
         self.prefix = "Extraire nom canonique (Food/Nettoyage) :"
+        self._initialized = True
         print("✅ T5 Model loaded and ready for inference!")
 
     @classmethod
     def get_instance(cls):
+        # Double-checked locking pattern pour thread-safety
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                if cls._instance is None:
+                    print("🔄 Creating T5 Service singleton instance...")
+                    cls._instance = cls()
         return cls._instance
 
     def predict(self, description: str):
-        input_text = f"{self.prefix}{description}"
-        inputs = self.tokenizer(input_text, return_tensors="pt").to(self.device)
+        # Thread-safe prediction avec lock pour éviter les conflits concurrents
+        with threading.Lock():
+            input_text = f"{self.prefix}{description}"
+            inputs = self.tokenizer(input_text, return_tensors="pt").to(self.device)
 
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=64,
-                return_dict_in_generate=True,
-                output_scores=True,
-                do_sample=False
-            )
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=64,
+                    return_dict_in_generate=True,
+                    output_scores=True,
+                    do_sample=False
+                )
 
         # Decode
         prediction = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)

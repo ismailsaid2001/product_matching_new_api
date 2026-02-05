@@ -9,17 +9,25 @@ def database_node(state: AgentState):
     print("--- ÉTAPE 1 : RECHERCHE BASE DE DONNÉES ---")
     suggestions = get_database_suggestions(state["description"])
     
+    # Store database confidence and prediction regardless of threshold
+    database_confidence = suggestions[0]['similarity_score'] if suggestions else 0.0
+    database_prediction = suggestions[0]['nature_product'] if suggestions else None
+    
     # On vérifie le meilleur score
     if suggestions and suggestions[0]['similarity_score'] >= THRESHOLD_DATABASE:
         similarity_score = suggestions[0]['similarity_score']
         return {
             "final_label": suggestions[0]['nature_product'],
             "confidence": similarity_score,  # Confidence = similarity score, not 1
+            "database_confidence": database_confidence,
+            "database_prediction": database_prediction,
             "api_suggestions": suggestions,
             "step_history": ["db_match_found"]
         }
     
     return {
+        "database_confidence": database_confidence,
+        "database_prediction": database_prediction,
         "api_suggestions": suggestions,
         "step_history": ["db_uncertain_calling_t5"]
     }
@@ -71,16 +79,7 @@ def orchestrator_node(state: AgentState):
 
     web_info = None
 
-    # CONDITION : On lance le Web Search si T5 est très incertain
-    # ou si l'API n'a rien donné de probant
-    try:
-        if state.get("t5_confidence", 0.0) < 0.4:
-            print("🔍 Produit complexe détecté. Lancement recherche Web...")
-            web_info = service.search_web(state["description"])
-    except Exception as e:
-        print(f"Recherche web échouée: {e}")
-
-    # GPT-5 rend son verdict
+    # GPT rend son verdict
     cost_info = None
     try:
         final_decision, cost_info = service.arbitrate(
@@ -91,15 +90,8 @@ def orchestrator_node(state: AgentState):
             web_context=web_info,
         )
         
-        # Log cost details
-        print(f"💵 Détail des coûts:")
-        print(f"   • Input: {cost_info['input_tokens']} tokens (${cost_info['input_cost_usd']:.6f})")
-        print(f"   • Cached: {cost_info['cached_tokens']} tokens (${cost_info['cached_cost_usd']:.6f})")
-        print(f"   • Output: {cost_info['output_tokens']} tokens (${cost_info['output_cost_usd']:.6f})")
-        print(f"   • TOTAL: ${cost_info['total_cost_usd']:.6f}")
-        
     except Exception as e:
-        print(f"Arbitrage échoué, repli local: {e}")
+        print(f"Arbitrage echoue, repli local: {e}")
         final_decision = (state.get("api_suggestions") or [{}])[0].get("nature_product") or state.get("t5_prediction") or ""
 
     return {

@@ -212,6 +212,10 @@ async def classify_single_product(session, product):
                     'expected_label': expected_label,
                     'is_correct': is_correct,
                     'confidence': result['confidence'],
+                    'database_confidence': result.get('database_confidence'),
+                    'database_prediction': result.get('database_prediction'),
+                    't5_confidence': result.get('t5_confidence'),
+                    't5_prediction': result.get('t5_prediction'),
                     'processing_time_ms': result['processing_time_ms'],
                     'cost_usd': result.get('cost_usd', 0.0),
                     'path_taken': str(result['path_taken']),
@@ -228,6 +232,10 @@ async def classify_single_product(session, product):
                     'expected_label': product.get("expected_label", "unknown"),
                     'is_correct': False,
                     'confidence': 0.0,
+                    'database_confidence': None,
+                    'database_prediction': None,
+                    't5_confidence': None,
+                    't5_prediction': None,
                     'processing_time_ms': 0.0,
                     'cost_usd': 0.0,
                     'path_taken': f'Error: {error_text}',
@@ -243,6 +251,10 @@ async def classify_single_product(session, product):
             'expected_label': product.get("expected_label", "unknown"),
             'is_correct': False,
             'confidence': 0.0,
+            'database_confidence': None,
+            'database_prediction': None,
+            't5_confidence': None,
+            't5_prediction': None,
             'processing_time_ms': 0.0,
             'cost_usd': 0.0,
             'path_taken': f'Exception: {str(e)}',
@@ -294,9 +306,9 @@ def get_category_from_product_id(product_id):
 async def run_evaluation():
     """Run the complete evaluation test - French products only"""
     print("🇫🇷 Évaluation Système de Classification - Produits 100% Français")
-    print(f"📊 Test de {len(TEST_PRODUCTS)} produits pour restaurants français")
-    print("🍷 Focus: Vins français, fromages, charcuterie, produits du terroir")
-    print("🎯 Labels de vérité terrain inclus pour calcul de précision")
+    print(f"Test de {len(TEST_PRODUCTS)} produits pour restaurants français")
+    print(" Focus: Vins français, fromages, charcuterie, produits du terroir")
+    print("Labels de vérité terrain inclus pour calcul de précision")
     print("=" * 80)
     
     # Check API health
@@ -304,11 +316,11 @@ async def run_evaluation():
         async with aiohttp.ClientSession() as session:
             async with session.get('http://localhost:8000/health', timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status != 200:
-                    print("❌ API Health check failed!")
+                    print("API Health check failed!")
                     return
-                print("✅ API est opérationnelle")
+                print("API est opérationnelle")
     except Exception as e:
-        print(f"❌ Impossible de se connecter à l'API: {e}")
+        print(f"Impossible de se connecter à l'API: {e}")
         return
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -332,8 +344,8 @@ async def run_evaluation():
             results.append(result)
             completed += 1
             category = result['category']
-            accuracy_symbol = "✅" if result['is_correct'] else "❌"
-            print(f"📈 Progression: {completed}/{len(TEST_PRODUCTS)} ({(completed/len(TEST_PRODUCTS)*100):.1f}%) - {category}: {result['product_id']} {accuracy_symbol}")
+            accuracy_symbol = "CORRECT" if result['is_correct'] else "INCORRECT"
+            print(f"Progression: {completed}/{len(TEST_PRODUCTS)} ({(completed/len(TEST_PRODUCTS)*100):.1f}%) - {category}: {result['product_id']} {accuracy_symbol}")
     
     # Calculate totals
     total_time = time.time() - start_time
@@ -391,11 +403,11 @@ async def run_evaluation():
     print("\n" + "=" * 80)
     print("📋 RÉSUMÉ DE L'ÉVALUATION - PRODUITS FRANÇAIS")
     print("=" * 80)
-    print(f"📊 Produits testés: {summary_stats['total_products']}")
-    print(f"✅ Classifications réussies: {summary_stats['successful_classifications']}")
-    print(f"❌ Classifications échouées: {summary_stats['failed_classifications']}")
-    print(f"📈 Taux de succès API: {summary_stats['success_rate_pct']:.1f}%")
-    print(f"🎯 Précision des prédictions: {summary_stats['overall_accuracy_pct']:.1f}% ({total_correct}/{len(successful_predictions)})")
+    print(f"Produits testés: {summary_stats['total_products']}")
+    print(f"Classifications réussies: {summary_stats['successful_classifications']}")
+    print(f"Classifications échouées: {summary_stats['failed_classifications']}")
+    print(f"Taux de succès API: {summary_stats['success_rate_pct']:.1f}%")
+    print(f"Précision des prédictions: {summary_stats['overall_accuracy_pct']:.1f}% ({total_correct}/{len(successful_predictions)})")
     print(f"⏱️  Temps total d'évaluation: {summary_stats['total_evaluation_time_sec']:.1f} secondes")
     print(f"⚡ Temps de traitement moyen: {summary_stats['average_processing_time_ms']:.1f} ms")
     print(f"💰 Coût total: ${summary_stats['total_cost_usd']:.4f}")
