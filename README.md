@@ -32,13 +32,13 @@ graph TD
     H1 --> H
     H2 --> H
     
-    H --> H3[LLM Evaluates:<br/>• Top 3 API Suggestions<br/>• T5 Prediction<br/>• Creates New Product if needed]
+    H --> H3[LLM Evaluates:<br/>• Top 3 API Suggestions<br/>• T5 Prediction<br/>• Creates New Product otherwise]
     H3 --> I[Final Decision<br/>+ Cost Tracking]
     
     style D fill:#E8F5E8
     style G fill:#E6F3FF  
     style I fill:#FFF0F5
-    style H3 fill:#F5F0FF,width:500px,height:200px
+    style H3 fill:#F5F0FF
 ```
 
 ## Features
