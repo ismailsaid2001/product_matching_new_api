@@ -17,23 +17,23 @@ Automatic product classification system using a multi-stage agent architecture w
 
 ```mermaid
 graph TD
-    A[Product Description] --> B[find_suggestions API Call]
-    B --> B1[Top 3 Product Suggestions<br/>with Similarity Scores]
-    B1 --> C{Best Score >= THRESHOLD_DATABASE?}
-    C -->|Yes| D[Return Best DB Result<br/>Fast Path - No Cost]
-    C -->|No| E[T5 Model Prediction]
-    E --> E1[T5 Generates Prediction<br/>+ Confidence Score]
-    E1 --> F{T5 Confidence >= THRESHOLD_T5_CONF?}
-    F -->|Yes| G[Return T5 Result<br/>Local Path - No Cost]
-    F -->|No| H[Groq LLM Arbitration]
+    A[Product Description] --> B[API Call]
+    B --> B1[Top 3 Suggestions<br/>+ Scores]
+    B1 --> C{Score >= DB_THRESHOLD?}
+    C -->|Yes| D[Return DB Result<br/>Fast - No Cost]
+    C -->|No| E[T5 Prediction]
+    E --> E1[T5 Result<br/>+ Confidence]
+    E1 --> F{Confidence >= T5_THRESHOLD?}
+    F -->|Yes| G[Return T5 Result<br/>Local - No Cost]
+    F -->|No| H[Groq LLM]
     
-    B1 --> H1[Store Top 3 API Suggestions]
-    E1 --> H2[Store T5 Prediction + Confidence]
+    B1 --> H1[Store API Data]
+    E1 --> H2[Store T5 Data]
     H1 --> H
     H2 --> H
     
-    H --> H3[LLM Evaluates:<br/>• Top 3 API Suggestions<br/>• T5 Prediction<br/>• Creates New Product otherwise]
-    H3 --> I[Final Decision<br/>+ Cost Tracking]
+    H --> H3[LLM Analysis:<br/>• API Options<br/>• T5 Result<br/>• Create New]
+    H3 --> I[Final Decision<br/>+ Cost Track]
     
     style D fill:#E8F5E8
     style G fill:#E6F3FF  
