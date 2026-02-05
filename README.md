@@ -38,7 +38,7 @@ graph TD
     style D fill:#E8F5E8
     style G fill:#E6F3FF  
     style I fill:#FFF0F5
-    style H3 fill:#F5F0FF
+    style H3 fill:#F5F0FF,width:200px,height:80px
 ```
 
 ## Features
