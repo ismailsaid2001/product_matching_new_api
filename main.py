@@ -6,10 +6,10 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from agent.graph import app_langgraph
 
-app = FastAPI(title="Agentic Product Classifier")
+app = FastAPI(title="Product Classification API")
 
-# Thread pool for CPU-bound operations
-executor = ThreadPoolExecutor(max_workers=4)
+# TODO: might need to tune this number based on server specs
+thread_pool = ThreadPoolExecutor(max_workers=4)
 
 class ClassificationRequest(BaseModel):
     designation: str
@@ -35,10 +35,11 @@ class BatchClassificationResponse(BaseModel):
     total_processing_time_ms: float
     total_cost_usd: float
 
-def process_single_product(designation: str, product_id: Optional[str] = None):
-    """Synchronous product classification for thread pool execution"""
-    start_time = time.time()
+def classify_single_item(designation: str, product_id: Optional[str] = None):
+    """Process one product at a time"""
+    start = time.time()  # track timing
     
+    # setup initial state for the graph
     initial_state = {
         "description": designation,
         "step_history": []
@@ -46,12 +47,12 @@ def process_single_product(designation: str, product_id: Optional[str] = None):
     
     result = app_langgraph.invoke(initial_state)
     
-    processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+    proc_time = (time.time() - start) * 1000  # ms
     
     # Extract cost if available from the result
-    cost_usd = None
+    total_cost = None
     if result.get("cost_info"):
-        cost_usd = result["cost_info"].get("total_cost_usd", 0.0)
+        total_cost = result["cost_info"].get("total_cost_usd", 0.0)
     
     return {
         "final_label": result["final_label"],
@@ -61,8 +62,8 @@ def process_single_product(designation: str, product_id: Optional[str] = None):
         "t5_confidence": result.get("t5_confidence"),
         "t5_prediction": result.get("t5_prediction"),
         "path_taken": result["step_history"],
-        "processing_time_ms": processing_time,
-        "cost_usd": cost_usd,
+        "processing_time_ms": proc_time,
+        "cost_usd": total_cost,
         "product_id": product_id
     }
 
@@ -70,11 +71,11 @@ def process_single_product(designation: str, product_id: Optional[str] = None):
 async def classify_product(request: ClassificationRequest):
     """Single product classification"""
     try:
-        # Execute in thread pool to prevent blocking
+        # run in separate thread to avoid blocking the main loop
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
-            executor, 
-            process_single_product, 
+            thread_pool, 
+            classify_single_item, 
             request.designation, 
             request.product_id
         )
@@ -84,45 +85,45 @@ async def classify_product(request: ClassificationRequest):
 
 @app.post("/classify/batch", response_model=BatchClassificationResponse)
 async def classify_products_batch(request: BatchClassificationRequest):
-    """Parallel batch classification"""
+    """Batch classification - runs multiple products in parallel"""
     try:
-        start_time = time.time()
+        batch_start = time.time()
         
         # Create tasks for parallel execution
         loop = asyncio.get_event_loop()
-        tasks = [
+        task_list = [
             loop.run_in_executor(
-                executor,
-                process_single_product,
-                product.designation,
-                product.product_id
+                thread_pool,
+                classify_single_item,
+                prod.designation,
+                prod.product_id
             )
-            for product in request.products
+            for prod in request.products
         ]
         
         # Execute all tasks in parallel
-        results = await asyncio.gather(*tasks)
+        batch_results = await asyncio.gather(*task_list)
         
-        total_time = (time.time() - start_time) * 1000
-        total_cost = sum(r.get("cost_usd", 0) or 0 for r in results)
+        batch_time = (time.time() - batch_start) * 1000
+        batch_cost = sum(r.get("cost_usd", 0) or 0 for r in batch_results)
         
         return BatchClassificationResponse(
-            results=[ClassificationResponse(**r) for r in results],
-            total_processing_time_ms=total_time,
-            total_cost_usd=total_cost
+            results=[ClassificationResponse(**r) for r in batch_results],
+            total_processing_time_ms=batch_time,
+            total_cost_usd=batch_cost
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.on_event("startup")
-async def load_models():
-    """Preload models at startup to avoid concurrent reloads"""
-    print("Preloading models at startup...")
+async def startup_stuff():
+    """Load models when app starts up"""
+    print("Loading models...")
     from services.t5_service import T5ModelService
     
-    # Preload T5 Service as singleton
-    t5_service = T5ModelService.get_instance()
-    print("Models preloaded and ready!")
+    # Load T5 model 
+    model_service = T5ModelService.get_instance()
+    print("All set!")
 
 @app.get("/health")
 async def health_check():

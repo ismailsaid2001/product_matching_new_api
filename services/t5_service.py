@@ -4,20 +4,27 @@ import threading
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 from huggingface_hub import HfFolder
-from config import MODEL_PATH, THRESHOLD_T5_CONF, BASE_MODEL_ID, HF_TOKEN
+from typing import Tuple
+import config as _cfg
+
 
 class T5ModelService:
+    """
+    Singleton T5 model service for product classification.
+    """
+    
     _instance = None
     _lock = threading.Lock()
     _initialized = False
 
     def __init__(self):
-        # Avoid multiple reinitializations
+        """Initialize T5 service (singleton pattern)."""
         if hasattr(self, '_initialized') and self._initialized:
             return
             
         print(f"🚀 Initializing T5 Service (Thread: {threading.current_thread().name})")
-        # Detect device (CPU only if GPU incompatible)
+        
+        # Setup device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         dtype = (
             torch.bfloat16
@@ -28,14 +35,14 @@ class T5ModelService:
         print(f"🔍 Using device: {self.device}")
 
         # Save HF token if provided
-        if HF_TOKEN:
-            HfFolder.save_token(HF_TOKEN)
+        if _cfg.HF_TOKEN:
+            HfFolder.save_token(_cfg.HF_TOKEN)
             print(f"✅ Hugging Face token authenticated")
         else:
             print(f"⚠️ HF_TOKEN not found in environment")
 
         # Resolve checkpoint path
-        checkpoint_path = os.path.abspath(MODEL_PATH)
+        checkpoint_path = os.path.abspath(_cfg.MODEL_PATH)
         print(f"🔍 Checkpoint path: {checkpoint_path}")
         print(f"🔍 Checkpoint exists: {os.path.exists(checkpoint_path)}")
         
@@ -49,13 +56,13 @@ class T5ModelService:
             raise
         
         # Load base model from HF with token
-        print(f"🔄 Loading base model {BASE_MODEL_ID}...")
+        print(f"🔄 Loading base model {_cfg.BASE_MODEL_ID}...")
         try:
             base_model = AutoModelForSeq2SeqLM.from_pretrained(
-                BASE_MODEL_ID,
+                _cfg.BASE_MODEL_ID,
                 torch_dtype=dtype,
                 device_map=None,
-                token=HF_TOKEN  # Pass token explicitly
+                token=_cfg.HF_TOKEN
             )
             print(f"✅ Base model loaded")
         except Exception as e:
@@ -84,7 +91,7 @@ class T5ModelService:
 
     @classmethod
     def get_instance(cls):
-        # Double-checked locking pattern pour thread-safety
+        """Double-checked locking pattern pour thread-safety."""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -92,7 +99,11 @@ class T5ModelService:
                     cls._instance = cls()
         return cls._instance
 
-    def predict(self, description: str):
+    def predict(self, description: str) -> Tuple[str, float]:
+        """Generate prediction for product description."""
+        if not hasattr(self, 'model') or self.model is None:
+            raise RuntimeError("Model not initialized. Call get_instance() first.")
+        
         # Thread-safe prediction with lock to avoid concurrent conflicts
         with threading.Lock():
             input_text = f"{self.prefix}{description}"

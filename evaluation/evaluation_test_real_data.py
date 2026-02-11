@@ -966,7 +966,7 @@ if __name__ == "__main__":
     # Configuration par défaut
     VALIDATION_FILE = "./data/validation_set.csv"
     NATURE_PRODUCT_FILE = "./data/nature_product.csv" 
-    SAMPLE_SIZE = 200  # Commencer par un échantillon pour tester
+    SAMPLE_SIZE = 20  # Commencer par un échantillon pour tester
     MAX_CONCURRENT = 5  # Éviter de surcharger l'API
     
     print("🚀 Démarrage de l'évaluation sur données réelles...")

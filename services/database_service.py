@@ -1,27 +1,16 @@
 import requests
-from config import API_URL
+from typing import List, Dict
+import config as _cfg
 
 
-def _normalize_suggestions(payload):
+def _normalize_suggestions(payload) -> List[Dict]:
     """
     Normalize the find_suggestions API response.
-    The response has the structure:
-    {
-      "nature_product_suggestions": [
-        {
-          "nature_product": str,
-          "nature_product_group": str,
-          "similarity_score": float
-        },
-        ...
-      ]
-    }
     """
     # Extract the suggestions list
     if isinstance(payload, dict):
         suggestions = payload.get("nature_product_suggestions", [])
     elif isinstance(payload, list):
-        # Fallback if response is directly a list
         suggestions = payload
     else:
         suggestions = []
@@ -33,7 +22,7 @@ def _normalize_suggestions(payload):
     return valid_suggestions
 
 
-def get_database_suggestions(designation: str):
+def get_database_suggestions(designation: str) -> List[Dict]:
     """
     Call the find_suggestions endpoint with simplified structure.
     """
@@ -43,7 +32,7 @@ def get_database_suggestions(designation: str):
         }
         
         response = requests.post(
-            API_URL,
+            _cfg.API_URL,
             json=payload,
             timeout=10,
         )
