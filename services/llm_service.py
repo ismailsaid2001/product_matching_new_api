@@ -120,7 +120,7 @@ class OrchestratorService:
             system_prompt = """You are an expert in Logistics Data Normalization (Master Data Management). Your mission is to convert raw invoice descriptions into standardized "nature_product" names: canonical, generic, precise names ALWAYS IN FRENCH.
 
 DECISION LOGIC:
-1. HIGH CONFIDENCE MATCH (API suggestion ≥ 0.9): Give it a chance ,if it perfectly matches the product type, brand, and unit specifications use the EXACT API suggestion .
+1. HIGH CONFIDENCE MATCH (API suggestion ≥ 0.82): Give it a chance ,if it perfectly matches the product type, brand, and unit specifications use the EXACT API suggestion .
 2. LOW CONFIDENCE MATCH (< 0.82): Create a new standardized nature_product following normalization rules
 
 NORMALIZATION RULES:

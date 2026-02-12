@@ -808,6 +808,7 @@ def analyze_t5_thresholds(successful_df, timestamp):
         scores = scorer.score(expected, predicted)
         rouge_score = scores['rougeL'].fmeasure
         t5_rouge_scores.append(rouge_score)
+
         
         # Exact match
         is_exact = (predicted == expected)
