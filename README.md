@@ -63,7 +63,7 @@ graph TD
 ### Setup
 1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ismailsaid2001/product_matching_new_api.git
 cd produc_match_new_api
 ```
 
@@ -349,15 +349,4 @@ This project is under MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Authors
 
-- **Your Name** - *Initial development* - [@your-github](https://github.com/your-github)
-
-## Support
-
-For any questions or issues:
-- **Issues** : [GitHub Issues](https://github.com/your-repo/issues)
-- **Email** : your-email@example.com
-- **Discord** : [Server link](https://discord.gg/your-server)
-
----
-
-**Feel free to star if this project is useful to you!**
+- **Ismail Said** - *Initial development* - [@ismailsaid](https://github.com/ismailsaid2001)
