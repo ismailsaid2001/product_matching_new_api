@@ -15,8 +15,8 @@ RUN pip install uv
 
 COPY requirements.txt .
 RUN uv pip install --no-cache-dir -r requirements.txt \
- && uv pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 \
-    torch torchvision torchaudio
+ && uv pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+     torch torchvision torchaudio
 
 COPY . .
 
