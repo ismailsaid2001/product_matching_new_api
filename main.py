@@ -13,7 +13,6 @@ thread_pool = ThreadPoolExecutor(max_workers=4)
 
 class ClassificationRequest(BaseModel):
     designation: str
-    product_id: Optional[str] = None
 
 class ClassificationResponse(BaseModel):
     final_label: str
@@ -25,7 +24,6 @@ class ClassificationResponse(BaseModel):
     path_taken: list
     processing_time_ms: float
     cost_usd: Optional[float] = None
-    product_id: Optional[str] = None
 
 class BatchClassificationRequest(BaseModel):
     products: List[ClassificationRequest]
@@ -35,7 +33,7 @@ class BatchClassificationResponse(BaseModel):
     total_processing_time_ms: float
     total_cost_usd: float
 
-def classify_single_item(designation: str, product_id: Optional[str] = None):
+def classify_single_item(designation: str):
     """Process one product at a time"""
     start = time.time()  # track timing
     
@@ -63,8 +61,7 @@ def classify_single_item(designation: str, product_id: Optional[str] = None):
         "t5_prediction": result.get("t5_prediction"),
         "path_taken": result["step_history"],
         "processing_time_ms": proc_time,
-        "cost_usd": total_cost,
-        "product_id": product_id
+        "cost_usd": total_cost
     }
 
 @app.post("/classify", response_model=ClassificationResponse)
@@ -76,8 +73,7 @@ async def classify_product(request: ClassificationRequest):
         result = await loop.run_in_executor(
             thread_pool, 
             classify_single_item, 
-            request.designation, 
-            request.product_id
+            request.designation
         )
         return ClassificationResponse(**result)
     except Exception as e:
@@ -95,8 +91,7 @@ async def classify_products_batch(request: BatchClassificationRequest):
             loop.run_in_executor(
                 thread_pool,
                 classify_single_item,
-                prod.designation,
-                prod.product_id
+                prod.designation
             )
             for prod in request.products
         ]

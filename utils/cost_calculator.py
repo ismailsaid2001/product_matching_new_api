@@ -12,7 +12,6 @@ class LLMProvider(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
 
-
 class CostCalculator:
     """Centralized cost calculation for different LLM providers."""
     

@@ -87,7 +87,7 @@ TAVILY_API_KEY = validated_config.get("TAVILY_API_KEY")
 HF_TOKEN = validated_config.get("HUGGINGFACE_TOKEN")
 
 # External API endpoint
-API_URL = "http://178.33.46.169:8012/find_suggestions"
+API_URL = "http://178.33.46.169:8002/find_suggestions"
 
 # ==================== MODEL CONFIGURATION ====================
 MODEL_PATH = "./checkpoint-11004"

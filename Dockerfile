@@ -10,9 +10,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
     rm -rf /var/lib/apt/lists/*
 
+# Install uv
+RUN pip install uv
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
- && pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 \
+RUN uv pip install --no-cache-dir -r requirements.txt \
+ && uv pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 \
     torch torchvision torchaudio
 
 COPY . .
